@@ -1,10 +1,12 @@
 import argparse
 import os
 import sys
+import logging
 from io import BytesIO
 from tcg_storage_binary_log_parser import TcgStorageBinaryLogParser, KaitaiStream
 from custom_printer import CustomPrinter
 from colorama import Fore, Style
+from typing import Optional
 
 # Define the Unicode code point for the left top character
 left_top_code_point = 0x250C        # Unicode code point for 'BOX DRAWINGS LIGHT DOWN AND RIGHT'
@@ -61,15 +63,20 @@ class SedcliMessageViewer:
         self.html_output = args.html_output
         self.no_colors = args.no_colors
 
-    def load_messages_from_binary_file(self):
-        """Load messages from the binary file.
+    def load_messages_from_binary_log(self, file_path: Optional[str] = None, start_message: int = 1, end_message: int = -1):
+        """Load messages from a binary log file or stdin.
 
-        This method reads binary data from the specified file, parses it using the TcgStorageBinaryLogParser,
+        Args:
+            file_path (str, optional): Path to the binary log file. If not provided, reads from stdin.
+            start_message (int): Index of the first message to include.
+            end_message (int): Index of the last message to include. Defaults to -1, indicating all messages after start_message.
+
+        This method reads binary data from the specified file or stdin, parses it using the TcgStorageBinaryLogParser,
         and populates the 'messages' attribute with the parsed messages.
         """
         try:
-            if self.file_path:
-                with open(self.file_path, 'rb') as f:
+            if file_path:
+                with open(file_path, 'rb') as f:
                     data = f.read()
             else:
                 data = sys.stdin.buffer.read()
@@ -77,51 +84,76 @@ class SedcliMessageViewer:
             kaitai_stream = KaitaiStream(BytesIO(data))
             sedcli_instance = TcgStorageBinaryLogParser(kaitai_stream)
 
-            self.messages = sedcli_instance.opal_command[self.start_message-1:self.end_message]
-        except FileNotFoundError:
-            print(f"Error: File '{self.file_path}' not found.")
+            self.messages = sedcli_instance.opal_command[start_message - 1:end_message]
+        except FileNotFoundError as e:
+            logging.error(f"Error: File '{file_path}' not found. {e}")
+            sys.exit(1)            
         except Exception as e:
-            print(f"Error: An unexpected error occurred - {e}")
+            logging.error(f"Error: An unexpected error occurred - {e}")
+            sys.exit(1)
 
-    def format_hex(data, spaces=0, ASCII=True):
+    def format_hex(data, leading_spaces=0, ASCII=True):
         """
         Format binary data as hexadecimal and ASCII representation.
 
         Args:
             data (bytes): The binary data to be formatted.
-            spaces (int): Number of spaces to add at the beginning of each line.
+            leading_spaces (int): Number of spaces to add at the beginning of each line.
             ASCII (bool): Flag indicating whether to include ASCII representation.
 
         Returns:
-            str: Formatted hexadecimal and ASCII representation of the data.
+            list of str: Formatted hexadecimal and ASCII representation of the data.
 
         """
+        HEX_CHARACTERS_PER_BYTE = 2
+        HEX_BYTES_PER_LINE = 16
+        HEX_CHARACTERS_PER_LINE = (HEX_CHARACTERS_PER_BYTE + 1) * HEX_BYTES_PER_LINE
+        ASCII_START = ord(' ')
+        ASCII_END = ord('~')
+        ASCII_DOT = '.'
+
         # Convert binary data to hexadecimal string
         hex_string = data.hex()
+
         # Format hexadecimal string with space separation every two characters
-        formatted_hex = ' '.join(hex_string[i:i+2] for i in range(0, len(hex_string), 2))
+        formatted_hex = ' '.join(hex_string[i:i+HEX_CHARACTERS_PER_BYTE] for i in range(0, len(hex_string), HEX_CHARACTERS_PER_BYTE))
+
         # Split the formatted hexadecimal string into lines of 47 characters each
-        lines = [formatted_hex[i:i+47] for i in range(0, len(formatted_hex), 48)]
+        lines = [formatted_hex[i:i + HEX_CHARACTERS_PER_LINE -1] for i in range(0, len(formatted_hex), HEX_CHARACTERS_PER_LINE)]
+
         # Convert hexadecimal to ASCII, showing only printable characters
-        ascii_chars = ''.join([chr(int(hex_char, 16)) if '20' <= hex_char <= '7e' else '.' for hex_char in formatted_hex.split(' ')])
+        ascii_chars = ''.join([chr(int(hex_char, 16)) if ASCII_START <= int(hex_char, 16) <= ASCII_END else ASCII_DOT for hex_char in formatted_hex.split(' ')])
+
         # Add leading spaces to lines except the first one
-        result_lines = [' ' * spaces + line if index > 0 else line for index, line in enumerate(lines)]
+        result_lines = [' ' * leading_spaces + line if index > 0 else line for index, line in enumerate(lines)]
+
         # Build the final lines by combining hexadecimal and ASCII representations
         final_lines = []
+        # Iterate over each line of the hexadecimal representation
         for index, line in enumerate(result_lines):
-            # Calculate the start and end indices for ASCII representation
-            start_index = index * 16
-            end_index = min((index + 1) * 16, len(ascii_chars))
-            # Calculate the number of spaces to add after the hexadecimal part
-            if end_index - start_index < 16:
-                spaces_to_add = (16 - (end_index - start_index)) * 3
+            # Calculate the starting index for the ASCII representation of the current line
+            start_index = index * HEX_BYTES_PER_LINE
+            # Calculate the ending index for the ASCII representation of the current line
+            # Ensure that the ending index does not exceed the length of the ASCII characters
+            end_index = min((index + 1) * HEX_BYTES_PER_LINE, len(ascii_chars))
+            # Calculate the number of trailing spaces to add after the hexadecimal part
+            # If the line doesn't contain a full line of bytes, calculate the number of missing bytes and spaces
+            if end_index - start_index < HEX_BYTES_PER_LINE:
+                # Calculate the number of missing bytes
+                missing_bytes = HEX_BYTES_PER_LINE - (end_index - start_index)
+                # Each byte is represented by two hexadecimal characters, plus one space
+                # Multiply by the number of missing bytes to get the total number of spaces needed
+                trailing_spaces = missing_bytes * (HEX_CHARACTERS_PER_BYTE + 1)
             else:
-                spaces_to_add = 0
+                # If the line contains a full line of bytes, no trailing spaces are needed
+                trailing_spaces = 0
             # Build the final line with appropriate spacing
             if ASCII:
-                final_lines.append(line + ' ' * spaces_to_add + '  ' + ascii_chars[start_index:end_index])
+                # Concatenate the line of hexadecimal characters, trailing spaces, and the corresponding ASCII representation
+                final_lines.append(line + ' ' * trailing_spaces + '  ' + ascii_chars[start_index:end_index])
             else:
-                final_lines.append(line + ' ' * spaces_to_add)
+                # Concatenate the line of hexadecimal characters with trailing spaces
+                final_lines.append(line + ' ' * trailing_spaces)
         return final_lines
 
     def print_nvme_command(self, message, i):
@@ -553,7 +585,7 @@ def start():
     custom_printer.set_block_characters(f"{Fore.YELLOW}{left_top_chr} {Style.RESET_ALL}",f"{Fore.YELLOW}{vertical_line_chr} {Style.RESET_ALL}", f"{Fore.YELLOW}{left_bottom_chr} {Style.RESET_ALL}")
 
     message_viewer = SedcliMessageViewer(args, custom_printer)
-    message_viewer.load_messages_from_binary_file()
+    message_viewer.load_messages_from_binary_log(args.file, args.start_message, args.end_message)
     message_viewer.print_messages()
     
     custom_printer.print(f"{Fore.GREEN}Number of messages in {args.file}: {len(message_viewer.messages)}", block_type='none')
@@ -588,7 +620,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-e", "--end-message",
         type=int,
-        default=None,
+        default=10,#None,
         help="Index of the last message to parse"
         )
     parser.add_argument("-o", "--html-output",
