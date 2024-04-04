@@ -621,6 +621,35 @@ class SedcliMessageViewer:
             self.custom_printer.print(f"        Unused Key Count             : {feature_descriptor.descriptor_data.unused_key_count}", block_type='mid')
             self.custom_printer.print(f"        Maximum Ranges Per Namespace : {feature_descriptor.descriptor_data.max_ranges_per_namespace}", block_type=block_type)
 
+    def print_Discovery_Response_Data_data_removal_mechanism_feature(self, feature_descriptor, is_last_descriptor=False):
+        # https://trustedcomputinggroup.org/wp-content/uploads/TCG-Storage-Feature-Set-Configurable-Locking-for-NVMe-Namespaces-and-SCSI-LUNs-Version-1.02-Revision-1.16_pub-1.pdf
+        block_type = 'end' if is_last_descriptor else 'mid'
+
+        if self.verbose == 1:
+            _descriptor_data_hex = SedcliMessageViewer.format_hex(feature_descriptor._raw_descriptor_data, 23)
+            self.custom_printer.print(f"      Feature Code: {Fore.GREEN}{feature_descriptor.feature_code.name} ({hex(feature_descriptor.feature_code.value)}){Style.RESET_ALL} (Ver={feature_descriptor.version}, Len={feature_descriptor.feature_code_length})", block_type='mid')
+            self.custom_printer.print(f"      Descriptor Data: ", block_type=block_type, end_line=False)
+            self.print_multilines(_descriptor_data_hex, Fore.CYAN)
+        elif self.verbose == 2:
+            self.custom_printer.print(f"      {Fore.GREEN}{feature_descriptor.feature_code.name} ({hex(feature_descriptor.feature_code.value)}){Style.RESET_ALL} (Ver={feature_descriptor.version}, Len={feature_descriptor.feature_code_length})", block_type='mid')
+            self.custom_printer.print(f"        DataRmvlPrc={feature_descriptor.descriptor_data.data_removal_operation_processing}, DataRmvlIntr={feature_descriptor.descriptor_data.data_removal_operation_interrupted}, SpprtdMchnsm={bin(feature_descriptor.descriptor_data.supported_data_removal_mechanism)}, FrmtBt0={feature_descriptor.descriptor_data.data_removal_time_format_for_bit_0}, FrmtBt1={feature_descriptor.descriptor_data.data_removal_time_format_for_bit_1}, FrmtBt2={feature_descriptor.descriptor_data.data_removal_time_format_for_bit_2}, FrmtBt5={feature_descriptor.descriptor_data.data_removal_time_format_for_bit_5}, TmBt0={feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_0}, TmBt1={feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_1}, TmBt2={feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_2}, TmBt5={feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_5}", block_type=block_type)
+        elif self.verbose == 3:
+            self.custom_printer.print(f"      Feature Code: {Fore.GREEN}{feature_descriptor.feature_code.name} ({hex(feature_descriptor.feature_code.value)}){Style.RESET_ALL}", block_type='mid')
+            self.custom_printer.print(f"      Version: {feature_descriptor.version}", block_type='mid')
+            self.custom_printer.print(f"      Feature Code Length: {feature_descriptor.feature_code_length}", block_type='mid')
+            self.custom_printer.print(f"      Descriptor Data:", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Operation Processing : {feature_descriptor.descriptor_data.data_removal_operation_processing}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Operation Interrupted : {feature_descriptor.descriptor_data.data_removal_operation_interrupted}", block_type='mid')
+            self.custom_printer.print(f"        Supported Data Removal Mechanism : {bin(feature_descriptor.descriptor_data.supported_data_removal_mechanism)}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time Format for bit 0 : {feature_descriptor.descriptor_data.data_removal_time_format_for_bit_0}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time Format for bit 1 : {feature_descriptor.descriptor_data.data_removal_time_format_for_bit_1}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time Format for bit 2 : {feature_descriptor.descriptor_data.data_removal_time_format_for_bit_2}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time Format for bit 5 : {feature_descriptor.descriptor_data.data_removal_time_format_for_bit_5}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time for supported data removal mechanism bit 0 : {feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_0}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time for supported data removal mechanism bit 1 : {feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_1}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time for supported data removal mechanism bit 2 : {feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_2}", block_type='mid')
+            self.custom_printer.print(f"        Data Removal Time for supported data removal mechanism bit 5 : {feature_descriptor.descriptor_data.data_removal_time_for_supported_data_removal_mechanism_bit_5}", block_type=block_type)
+
     def print_Discovery_Response_Data(self, message):
         featureDescriptorFunctionMap= {
             LogParser.FeatureDescriptorType.FeatureCodeEnum.tper_feature:               self.print_Discovery_Response_Data_tper_feature,
@@ -637,7 +666,7 @@ class SedcliMessageViewer:
             LogParser.FeatureDescriptorType.FeatureCodeEnum.key_per_io_ssc_v1_feature:  self.print_Discovery_Response_Data_generic,
             LogParser.FeatureDescriptorType.FeatureCodeEnum.block_sid_authentication_feature:       self.print_Discovery_Response_Data_block_sid_authentication_feature,
             LogParser.FeatureDescriptorType.FeatureCodeEnum.configurable_namespace_locking_feature: self.print_Discovery_Response_Data_configurable_namespace_locking_feature,
-            LogParser.FeatureDescriptorType.FeatureCodeEnum.data_removal_mechanism_feature:         self.print_Discovery_Response_Data_generic,
+            LogParser.FeatureDescriptorType.FeatureCodeEnum.data_removal_mechanism_feature:         self.print_Discovery_Response_Data_data_removal_mechanism_feature,
             LogParser.FeatureDescriptorType.FeatureCodeEnum.shadow_mbr_for_multiple_namespaces_feature_descriptor_feature: self.print_Discovery_Response_Data_generic,
         }
         _length_of_parameter_data = message.comid_packets.length_of_parameter_data
@@ -720,8 +749,8 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--file",
         help="Path to the binary file containing TCG Storage messages",
         #default="binary_log_file.bin_0x79c-0x7f3.bin"
-        #default="libsed_2550.bin"
-        default="libsed.bin"
+        default="libsed_2550.bin"
+        #default="libsed.bin"
         #default=None
     )
     parser.add_argument("-v", "--verbose",
@@ -737,7 +766,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("-e", "--end-message",
         type=int,
-        default=None,
+        default=1,#None,
         help="Index of the last message to parse"
         )
     parser.add_argument("-o", "--html-output",
