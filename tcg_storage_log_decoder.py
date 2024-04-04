@@ -703,7 +703,7 @@ class SedcliMessageViewer:
                 featureDescriptorFunction(feature_descriptor, _is_last_descriptor)
             else:
                 # Handle the case where feature code is not recognized
-                self.custom_printer.print(f"  Unsupported feature code:", feature_descriptor.feature_code, block_type='mid')
+                self.custom_printer.print(f"      {Fore.MAGENTA}Unsupported feature code:{Style.RESET_ALL}", feature_descriptor.feature_code, block_type='mid')
                 self.print_Discovery_Response_Data_generic(feature_descriptor, _is_last_descriptor)
 
     def print_messages(self):
@@ -792,5 +792,4 @@ if __name__ == "__main__":
     start()
 
 # Complete Discovery response parsing
-# Improve Unsupported feature code:
 # There is no status code in print_ComPacketFormat_Payload_PacketFormatPayload_CreditControlDataSubPacketPayload
