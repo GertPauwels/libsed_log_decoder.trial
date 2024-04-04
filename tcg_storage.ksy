@@ -1,5 +1,5 @@
 meta:
-  id: tcg_storage_binary_log_parser
+  id: tcg_storage_binary_log_parser_class
   endian: be
   file-extension: bin
 
@@ -356,6 +356,13 @@ types:
         type: u4
       - id: max_ranges_per_namespace
         type: u4
+    instances:
+      range_c:
+        value: (byte_1 & 0b10000000) >> 7
+      range_p:
+        value: (byte_1 & 0b01000000) >> 6
+      sum_c:
+        value: (byte_1 & 0b00100000) >> 5
 
   feature_descriptor_data_removal_mechanism_type:
     doc: Feature Code = 0x0404
@@ -385,13 +392,13 @@ types:
         value: (byte_2 & 0b00000010) >> 1
       data_removal_operation_processing:
         value: (byte_2 & 0b00000001) >> 0
-      data_removal_time_format_for_it_5:
+      data_removal_time_format_for_bit_5:
         value: (byte_4 & 0b00100000) >> 5
-      data_removal_time_format_for_it_2:
+      data_removal_time_format_for_bit_2:
         value: (byte_4 & 0b00000100) >> 2
-      data_removal_time_format_for_it_1:
+      data_removal_time_format_for_bit_1:
         value: (byte_4 & 0b00000010) >> 1
-      data_removal_time_format_for_it_0:
+      data_removal_time_format_for_bit_0:
         value: (byte_4 & 0b00000001) >> 0
 
   # com_packet_format
