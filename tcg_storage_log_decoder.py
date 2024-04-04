@@ -43,14 +43,16 @@ class SedcliMessageViewer:
     nvme_security_send = 0x81
     nvme_security_receive = 0x82
 
-    # Define the Unicode code point for the left top character
-    left_top_code_point = 0x250C        # Unicode code point for 'BOX DRAWINGS LIGHT DOWN AND RIGHT'
-    vertical_line_code_point = 0x2502   # Unicode code point for 'BOX DRAWINGS LIGHT VERTICAL'
-    left_bottom_code_point = 0x2514     # Unicode code point for 'BOX DRAWINGS LIGHT UP AND RIGHT'
-    # Convert the code point to a Unicode character
-    vertical_line_chr = chr(vertical_line_code_point)
-    left_top_chr = chr(left_top_code_point)
-    left_bottom_chr = chr(left_bottom_code_point)
+# Lines below in remark as they are not used and can be removed after further testing
+#
+#    # Define the Unicode code point for the left top character
+#    left_top_code_point = 0x250C        # Unicode code point for 'BOX DRAWINGS LIGHT DOWN AND RIGHT'
+#    vertical_line_code_point = 0x2502   # Unicode code point for 'BOX DRAWINGS LIGHT VERTICAL'
+#    left_bottom_code_point = 0x2514     # Unicode code point for 'BOX DRAWINGS LIGHT UP AND RIGHT'
+#    # Convert the code point to a Unicode character
+#    vertical_line_chr = chr(vertical_line_code_point)
+#    left_top_chr = chr(left_top_code_point)
+#    left_bottom_chr = chr(left_bottom_code_point)
 
     def __init__(self, args, custom_printer):
         """Initialize SedcliMessageViewer with command line arguments."""
@@ -716,10 +718,10 @@ if __name__ == "__main__":
         description="SEDCLI Binary File Viewer"
     )
     parser.add_argument("-f", "--file",
-        help="Path to the binary file containing SEDCLI messages",
+        help="Path to the binary file containing TCG Storage messages",
         #default="binary_log_file.bin_0x79c-0x7f3.bin"
-        default="libsed_2550.bin"
-        #default="libsed.bin"
+        #default="libsed_2550.bin"
+        default="libsed.bin"
         #default=None
     )
     parser.add_argument("-v", "--verbose",
@@ -757,11 +759,6 @@ if __name__ == "__main__":
     # Add the script_name to the args structure
     args.script_name = script_name
     args.script_name_no_extension = script_name_no_extension
-
-    # Check arguments
-    #if not os.path.exists(args.file):
-    #    print(f"Error: File '{args.file}' not found.")
-    #    exit
 
     start()
 
