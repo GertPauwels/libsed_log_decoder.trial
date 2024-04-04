@@ -442,6 +442,7 @@ class SedcliMessageViewer:
             self.custom_printer.print(f"      Descriptor Data: {feature_descriptor.descriptor_data}", block_type=block_type)
 
     def print_Discovery_Response_Data_tper_feature(self, feature_descriptor, is_last_descriptor=False):
+        # https://trustedcomputinggroup.org/wp-content/uploads/TCG-Storage-Opal-SSC-v2p02-r1p0_pub24jan2022.pdf
         block_type = 'end' if is_last_descriptor else 'mid'
 
         if self.verbose == 1:
@@ -465,6 +466,7 @@ class SedcliMessageViewer:
             self.custom_printer.print(f"        ComID Mgmt Supported  : {feature_descriptor.descriptor_data.comid_mgmt_supported}", block_type=block_type)
 
     def print_Discovery_Response_Data_locking_feature(self, feature_descriptor, is_last_descriptor=False):
+        # https://trustedcomputinggroup.org/wp-content/uploads/TCG-Storage-Opal-SSC-v2p02-r1p0_pub24jan2022.pdf
         block_type = 'end' if is_last_descriptor else 'mid'
 
         if self.verbose == 1:
@@ -488,6 +490,7 @@ class SedcliMessageViewer:
             self.custom_printer.print(f"        MBRDone               : {feature_descriptor.descriptor_data.mbr_done}", block_type=block_type)
 
     def print_Discovery_Response_Data_geometry_reporting_feature(self, feature_descriptor, is_last_descriptor=False):
+        # https://trustedcomputinggroup.org/wp-content/uploads/TCG-Storage-Opal-SSC-v2p02-r1p0_pub24jan2022.pdf
         block_type = 'end' if is_last_descriptor else 'mid'
 
         if self.verbose == 1:
@@ -551,7 +554,7 @@ class SedcliMessageViewer:
             self.custom_printer.print(f"        DataStore table size alignment         : {feature_descriptor.descriptor_data.datastore_table_size_alignment}", block_type=block_type)
 
     def print_Discovery_Response_Data_opal_ssc_v2_feature(self, feature_descriptor, is_last_descriptor=False):
-        # hhttps://trustedcomputinggroup.org/wp-content/uploads/TCG-Storage-Opal-SSC-v2p02-r1p0_pub24jan2022.pdf
+        # https://trustedcomputinggroup.org/wp-content/uploads/TCG-Storage-Opal-SSC-v2p02-r1p0_pub24jan2022.pdf
         block_type = 'end' if is_last_descriptor else 'mid'
 
         if self.verbose == 1:
