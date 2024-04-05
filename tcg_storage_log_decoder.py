@@ -726,7 +726,13 @@ class SedcliMessageViewer:
 
 def start():
     """Start the SEDCLI Binary File Viewer."""
-    output_file = "libsed.html"
+    # Find the last occurrence of dot (.)
+    last_dot_index = args.file.rfind('.')
+    # If there is an extension, remove it
+    if last_dot_index > 0:
+        output_file = args.file[:last_dot_index] + '.shtml'
+    else:
+        output_file = args.file + '.shtml'
 
     custom_printer = CustomPrinter(color=not args.no_colors, write_to_html=args.html_output, html_file_name=output_file)
     custom_printer.set_use_block(True)
@@ -737,9 +743,9 @@ def start():
     message_viewer.load_messages_from_binary_log(args.file, args.start_message, args.end_message)
     message_viewer.print_messages()
     
-    custom_printer.print(f"{Fore.GREEN}Number of messages in {args.file}: {len(message_viewer.messages)}", block_type='none')
+    custom_printer.print(f"{Fore.GREEN}Number of messages decoded from {args.file}: {len(message_viewer.messages)}{Style.RESET_ALL}", block_type='none')
     if args.html_output:
-        custom_printer.print(f"{Fore.GREEN}html output written: {output_file}", block_type='none')
+        custom_printer.print(f"{Fore.GREEN}html output written: {output_file}{Style.RESET_ALL}", block_type='none')
 
 if __name__ == "__main__":
     # Use os.path.basename to get the script name without directory and extension
@@ -754,33 +760,34 @@ if __name__ == "__main__":
         #default="binary_log_file.bin_0x79c-0x7f3.bin"
         default="libsed_2550.bin"
         #default="libsed.bin"
+        #default="take_ownership.bin"
         #default=None
     )
     parser.add_argument("-v", "--verbose",
         type=int,
         choices=[1, 2, 3],
         default=2,
-        help="Increase output verbosity (1: minimal, 2: moderate, 3: high)"
+        help="Increase output verbosity (1: minimal, 2: moderate, 3: high). Default = 2"
     )
     parser.add_argument("-s", "--start-message",
         type=int,
         default=1,
-        help="Index of the first message to parse (starting from 1)"
+        help="Index of the first message to parse (starting from 1). Default = 1"
     )
     parser.add_argument("-e", "--end-message",
         type=int,
-        default=1,#None,
-        help="Index of the last message to parse"
+        default=None,
+        help="Index of the last message to parse. Default = None"
         )
     parser.add_argument("-o", "--html-output",
-        default=True,
+        default=False,
         action="store_true",
-        help="Write output to HTML file"
+        help="Write output to HTML file. Default = False"
     )    
     parser.add_argument("-b", "--no-colors",
         default=False,
         action="store_true",
-        help="Disable colors"
+        help="Disable colors. Default = False"
     )
     parser.add_argument("-V", "--version",
         action="store_true",
